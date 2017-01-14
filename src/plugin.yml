@@ -1,0 +1,37 @@
+name: TameProtect
+version: 1.0
+author: DFood
+main: eu.crypticcraft.tameprotect.TameProtect
+commands:
+  tprot:
+    description: Base command for TameProtect.
+    usage: /tprot <add/remove/info/setowner> <player name if applicable>
+
+permissions:
+  tameprotect.protect:
+    description: Animals will automatically get protected when tamed.
+    default: true
+  tameprotect.addmember:
+    description: Add a member to your animal.
+    default: true
+  tameprotect.removemember:
+    description: Remove a member from your animal.
+    default: true
+  tameprotect.info:
+    description: Get information about animals.
+    default: true
+  tameprotect.setowner:
+    description: Set the owner of your animal.
+    default: true
+  tameprotect.addmember.other:
+    description: Add members to other peoples animals.
+    default: op
+  tameprotect.removemember.other:
+    description: Remove members from other peoples animals.
+    default: op
+  tameprotect.setowner.other:
+    description: Set the owner of other peoples animals.
+    default: op
+  tameprotect.override:
+    description: Override animal protections.
+    default: op
