@@ -1,5 +1,6 @@
 package eu.crypticcraft.tameprotect.Handlers;
 import eu.crypticcraft.tameprotect.Classes.Pair;
+import eu.crypticcraft.tameprotect.Classes.TamePlayer;
 import eu.crypticcraft.tameprotect.Protection;
 import eu.crypticcraft.tameprotect.TameProtect;
 import eu.crypticcraft.tameprotect.Utilities.PlayerUtils;
@@ -16,12 +17,18 @@ import java.util.UUID;
 public class CommandHandler implements CommandExecutor {
     private TameProtect plugin;
 
+    private long commandTimeout;
     private HashMap<String, TameTask> commandToTask;
     private enum TameTask {ADD, REMOVE, SET_OWNER, INFO}
 
     private HashMap<UUID, Pair<TameTask, String>> commandQueue = new HashMap<UUID, Pair<TameTask, String>>();
 
+    /**
+     * Registers command and sets up some base variables.
+     * @param plugin The base plugin instance.
+     */
     public CommandHandler(TameProtect plugin) {
+        this.commandTimeout = plugin.getConfig().getLong("command_timeout") * 20;
         this.plugin = plugin;
         plugin.getCommand("tame").setExecutor(this);
         plugin.getCommand("tprot").setExecutor(this);
@@ -32,6 +39,13 @@ public class CommandHandler implements CommandExecutor {
         commandToTask.put("remove", TameTask.REMOVE);
         commandToTask.put("setowner", TameTask.SET_OWNER);
         commandToTask.put("info", TameTask.INFO);
+    }
+
+    /**
+     * Reload configuration options.
+     */
+    public void reload() {
+        this.commandTimeout = plugin.getConfig().getLong("command_timeout") * 20;
     }
 
     /**
@@ -47,10 +61,12 @@ public class CommandHandler implements CommandExecutor {
             public void run() {
                 commandQueue.remove(player);
             }
-        }, 200L);
+        }, commandTimeout);
     }
 
     /**
+     * To be called whenever a player interacts with an entity. This checks the
+     * command queue for relevant actions to perform, and handles everything.
      *
      * @param player The player involved in this event.
      * @param entity The entity involved in this event.
@@ -62,6 +78,7 @@ public class CommandHandler implements CommandExecutor {
         if (protection == null || command == null) return false;
         commandQueue.remove(player.getUniqueId());
 
+        final boolean mountOnCommand = plugin.getConfig().getBoolean("mount_on_command");
         final boolean playerIsOwner = protection.getOwner().equals(player.getUniqueId());
         final boolean playerOverride = player.hasPermission("tameprotect.override");
 
@@ -82,31 +99,30 @@ public class CommandHandler implements CommandExecutor {
         final boolean actionPerm = player.hasPermission(String.format("tameprotect.%s", action));
         final boolean actionPermOther = player.hasPermission(String.format("tameprotect.%s.other", action));
         final String argument = command.getValue();
-        Player argPlayer = PlayerUtils.getPlayer(argument);
+        TamePlayer argPlayer = PlayerUtils.getPlayer(argument);
 
         if ((playerOverride || actionPermOther) || (actionPerm && playerIsOwner)) {
             if (!command.getKey().equals(TameTask.INFO)) {
-                Bukkit.broadcastMessage("" + argPlayer.hasPlayedBefore());
-                if (argPlayer == null || !argPlayer.hasPlayedBefore()) {
-                    player.sendMessage(plugin.getMessage("unknown", "", protection.getName()));
-                    return true;
+                if (argPlayer == null || (!argPlayer.hasPlayedBefore()) && !argPlayer.isOnline()) {
+                    plugin.sendMessage(player, "unknown", "", protection.getName());
+                    return !mountOnCommand;
                 }
             }
             // argPlayer is already null-checked - IDE may throw warning.
             switch (command.getKey()) {
                 case ADD:
                     protection.addMember(argPlayer.getUniqueId());
-                    player.sendMessage(plugin.getMessage("add", argPlayer.getName(), protection.getName()));
+                    plugin.sendMessage(player, "add", argPlayer.getName(), protection.getName());
                     break;
                 case REMOVE:
                     protection.removeMember(argPlayer.getUniqueId());
-                    player.sendMessage(plugin.getMessage("remove", argPlayer.getName(), protection.getName()));
+                    plugin.sendMessage(player, "remove", argPlayer.getName(), protection.getName());
                     break;
                 case SET_OWNER:
                     Player newPlayer = Bukkit.getPlayer(command.getValue());
                     if (newPlayer == null) {
-                        player.sendMessage(plugin.getMessage("offline", argPlayer.getName(), protection.getName()));
-                        return true;
+                        plugin.sendMessage(player, "offline", argPlayer.getName(), protection.getName());
+                        return !mountOnCommand;
                     }
                     protection.setOwner(newPlayer);
                     break;
@@ -116,15 +132,25 @@ public class CommandHandler implements CommandExecutor {
             }
         }
         else {
-            player.sendMessage(plugin.getMessage("permission", argPlayer.getName(), protection.getName()));
+            plugin.sendMessage(player, "permission", argPlayer.getName(), protection.getName());
         }
-        return true;
+        return !mountOnCommand;
     }
 
+    /**
+     * Handles commands by putting them in a queue.
+     *
+     * @param sender Sender of command
+     * @param command Base command
+     * @param label
+     * @param args Arguments used
+     * @return Whether the command was successfully handled.
+     */
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args.length > 0) {
             if (args[0].equals("reload") && sender.hasPermission("tameprotect.reload")) {
                 plugin.reloadConfiguration();
+                plugin.sendMessage((Player) sender, "configuration", "", "");
                 return true;
             }
 

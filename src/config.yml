@@ -1,5 +1,6 @@
 damage_while_riding: true
-mount_on_command: false
+mount_on_command: true
+command_timeout: 5
 message_prefix: ""
 messages:
   ride: "&cYou are not allowed to ride this animal!"

@@ -3,6 +3,7 @@ package eu.crypticcraft.tameprotect;
 import eu.crypticcraft.tameprotect.Handlers.CommandHandler;
 import eu.crypticcraft.tameprotect.Handlers.DatabaseHandler;
 import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.*;
 
@@ -20,6 +21,7 @@ public class TameProtect extends JavaPlugin {
     public void reloadConfiguration() {
         this.reloadConfig();
         protectionDatabase.reloadProtections();
+        commandHandler.reload();
     }
 
     @Override
@@ -42,13 +44,13 @@ public class TameProtect extends JavaPlugin {
         return commandHandler;
     }
 
-    public String getMessage(String msg, String playerName, String animalName) {
+    public void sendMessage(Player player, String msg, String playerName, String animalName) {
         playerName = playerName == null ? "" : playerName;
         animalName = animalName == null ? "" : animalName;
         String m = this.getConfig().getString("message_prefix");
         m += this.getConfig().getString("messages." + msg);
         m = m.replaceAll("&p", playerName);
         m = m.replaceAll("&w", animalName);
-        return ChatColor.translateAlternateColorCodes('&', m);
+        if (m.length() > 0) player.sendMessage(ChatColor.translateAlternateColorCodes('&', m));
     }
 }

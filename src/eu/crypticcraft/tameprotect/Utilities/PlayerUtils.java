@@ -1,4 +1,5 @@
 package eu.crypticcraft.tameprotect.Utilities;
+import eu.crypticcraft.tameprotect.Classes.TamePlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -11,17 +12,17 @@ public class PlayerUtils {
      * @param name Name of player.
      * @return The Player object.
      */
-    public static Player getPlayer(String name) {
+    public static TamePlayer getPlayer(String name) {
         Player player = Bukkit.getPlayer(name);
         if (player == null) {
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(name);
             if (offlinePlayer == null) {
                 return null;
             } else {
-                player = offlinePlayer.getPlayer();
+                return new TamePlayer(offlinePlayer);
             }
         }
-        return player;
+        return new TamePlayer(player);
     }
 
     /**

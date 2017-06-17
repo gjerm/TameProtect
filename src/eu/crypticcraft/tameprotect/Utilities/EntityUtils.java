@@ -58,6 +58,12 @@ public class EntityUtils {
         switch (entity.getType()) {
             case HORSE:
                 return "Horse";
+            case LLAMA:
+                return "Llama";
+            case WOLF:
+                return "Wolf";
+            case OCELOT:
+                return "Ocelot";
             case DONKEY:
                 return "Donkey";
             case MULE:
@@ -66,12 +72,7 @@ public class EntityUtils {
                 return "Skeleton Horse";
             case ZOMBIE_HORSE:
                 return "Zombie Horse";
-            case LLAMA:
-                return "Llama";
-            case WOLF:
-                return "Wolf";
-            case OCELOT:
-                return "Ocelot";
+
             default:
                 return "Unknown";
         }

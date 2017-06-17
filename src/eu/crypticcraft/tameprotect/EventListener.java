@@ -58,6 +58,8 @@ public class EventListener implements Listener {
     public void onMountAnimal (VehicleEnterEvent event) {
         if (event.getEntered() instanceof Player && event.getVehicle() instanceof Tameable) {
             Player player = (Player) event.getEntered();
+            if (player.hasPermission("tameprotect.override")) return;
+
             Protection protection = Protection.loadProtection(event.getVehicle(), plugin);
 
             // Nobody owns this animal
@@ -66,7 +68,7 @@ public class EventListener implements Listener {
             }
             // Player is not the owner nor are they a member of the horse protection
             if (!player.getUniqueId().equals(protection.getOwner()) && !protection.getMembers().contains(player.getUniqueId())) {
-                player.sendMessage(plugin.getMessage("ride", player.getName(), protection.getName()));
+                plugin.sendMessage(player, "ride", player.getName(), protection.getName());
                 event.setCancelled(true);
             }
         }
@@ -102,7 +104,7 @@ public class EventListener implements Listener {
         if (event.getDamager() instanceof Player) {
             Player player = (Player) event.getDamager();
             if (!(protection.getOwner().equals(player.getUniqueId()) || player.hasPermission("tameprotect.override"))) {
-                player.sendMessage(plugin.getMessage("harm", player.getName(), protection.getName()));
+                plugin.sendMessage(player, "harm", player.getName(), protection.getName());
                 event.setCancelled(true);
             }
         }
@@ -111,7 +113,7 @@ public class EventListener implements Listener {
             if (arrow.getShooter() instanceof Player) {
                 Player shooter = (Player) arrow.getShooter();
                 if (protection.getOwner().equals(shooter.getUniqueId()) || shooter.hasPermission("tameprotect.override")) {
-                    shooter.sendMessage(plugin.getMessage("harm", shooter.getName(), protection.getName()));
+                    plugin.sendMessage(shooter, "harm", shooter.getName(), protection.getName());
                     event.setCancelled(true);
                 }
             }
