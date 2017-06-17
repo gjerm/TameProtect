@@ -9,17 +9,21 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
 
-/**
- * Created by dfood on 2016-04-30.
- */
+
 public class TameProtect extends JavaPlugin {
-    TameProtectConfigHandler config;
-    Set<UUID> tameOut = new HashSet<UUID>();
-    HashMap<UUID, Pair<String, String>> commandQueue = new HashMap<UUID, Pair<String, String>>();
-    HashMap<UUID, TameProtection> protections = new HashMap<UUID, TameProtection>();
+    private TameProtectConfigHandler config;
+    private static Set<UUID> tameOut = new HashSet<UUID>();
+    private static HashMap<UUID, Pair<String, String>> commandQueue = new HashMap<UUID, Pair<String, String>>();
+    private static HashMap<UUID, TameProtection> protections = new HashMap<UUID, TameProtection>();
+
+    public void loadConfiguration() {
+        this.getConfig().options().copyDefaults(true);
+        this.saveConfig();
+    }
 
     @Override
     public void onEnable() {
+        loadConfiguration();
         this.config = new TameProtectConfigHandler(this);
         this.getServer().getPluginManager().registerEvents(new TameProtectListener(this), this);
     }
@@ -39,7 +43,6 @@ public class TameProtect extends JavaPlugin {
         return tameOut;
     }
 
-
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("tprot")) {
@@ -52,21 +55,18 @@ public class TameProtect extends JavaPlugin {
         return true;
     }
 
-
-
     private void queueCommand(final UUID player, String intent, String command) {
         commandQueue.put(player, new Pair<String, String>(intent, command));
-
         this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
             public void run() {
                 commandQueue.remove(player);
             }
         }, 200L);
     }
+
     // Timeout for taming so the correct name is set
     public void tameOut(final UUID player) {
         tameOut.add(player);
-
         this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
             public void run() {
                 tameOut.remove(player);

@@ -1,0 +1,4 @@
+damage_while_riding: true
+messages:
+  cannot_ride: "You are not allowed to ride this animal!"
+  cannot_harm: "You are not allowed to harm this animal!"

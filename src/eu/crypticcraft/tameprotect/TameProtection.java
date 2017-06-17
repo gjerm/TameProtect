@@ -4,9 +4,12 @@ import eu.crypticcraft.tameprotect.Utils.TameProtectConfigHandler;
 import eu.crypticcraft.tameprotect.Utils.TameProtectUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.*;
+import org.bukkit.event.entity.EntityDamageEvent;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -14,9 +17,9 @@ import java.util.logging.Level;
  * Created by dfood on 2016-04-30.
  */
 public class TameProtection {
-    Entity animal;
-    HashSet<UUID> members;
-    TameProtectConfigHandler config;
+    private Entity animal;
+    private HashSet<UUID> members;
+    private TameProtectConfigHandler config;
 
     /**
      * Constructs a new protection.
@@ -59,10 +62,6 @@ public class TameProtection {
         this.members = members;
     }
 
-    public Entity getAnimal() {
-        return animal;
-    }
-
     public UUID getOwner() {
         Tameable tamed = (Tameable) animal;
         return tamed.getOwner().getUniqueId();
@@ -92,6 +91,13 @@ public class TameProtection {
         tamed.setOwner(owner);
 
         animal.setCustomName(owner.getName() + "'s " + TameProtectUtils.getHumanName(animal));
+        return true;
+    }
+
+    public boolean dealEnvironmentalDamage(boolean ridingCausesEnvDamage, EntityDamageEvent.DamageCause cause) {
+        List<Entity> riding = this.animal.getPassengers();
+        if (!TameProtectUtils.getDamageCauses().contains(cause) || !(ridingCausesEnvDamage && riding.size() > 0))
+            return false;
         return true;
     }
 

@@ -16,7 +16,6 @@ import java.util.logging.Level;
  * Created by dfood on 08.06.2016.
  */
 public class TameProtectConfigHandler {
-
     private FileConfiguration protectionConfig;
     private File savedProtections;
     private TameProtect plugin;
@@ -35,14 +34,6 @@ public class TameProtectConfigHandler {
             savedProtections = new File(plugin.getDataFolder() + "/protections.yml");
         }
         protectionConfig = YamlConfiguration.loadConfiguration(savedProtections);
-    }
-
-
-    public HashMap<UUID, TameProtection> getProtectionsFromConfig() {
-        if (protectionConfig == null) {
-            reloadProtections();
-        }
-        return TameProtectUtils.getFromConfig(this);
     }
 
     public void saveProtections() {

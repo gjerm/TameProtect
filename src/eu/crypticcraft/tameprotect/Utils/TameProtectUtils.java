@@ -86,9 +86,8 @@ public class TameProtectUtils {
         return null;
     }
 
-
     /**
-     * Simply returns the human-readable name for an entity provided it is rideable.
+     * Returns the human-readable name for an entity provided it is rideable.
      *
      * @param entity The entity to obtain the name of.
      * @return The human-readable name of the entity.
@@ -103,7 +102,6 @@ public class TameProtectUtils {
         } else if (entity.getType().equals(EntityType.SKELETON_HORSE)) {
             return "Skeleton Horse";
         } else if (entity.getType().equals(EntityType.ZOMBIE_HORSE)) {
-            // Kiiind of pointless.. for now
             return "Zombie Horse";
         } else if (entity.getType().equals(EntityType.LLAMA)) {
             return "Llama";
@@ -180,7 +178,6 @@ public class TameProtectUtils {
                 }
             }
         }
-
         return null;
     }
 
