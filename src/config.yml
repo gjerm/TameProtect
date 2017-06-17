@@ -1,4 +1,13 @@
 damage_while_riding: true
+mount_on_command: false
+message_prefix: ""
 messages:
-  cannot_ride: "You are not allowed to ride this animal!"
-  cannot_harm: "You are not allowed to harm this animal!"
+  ride: "&cYou are not allowed to ride this animal!"
+  harm: "&cYou are not allowed to harm this animal!"
+  permission: "&cYou do not have permission to perform this command!"
+  unknown: "&7&oThis player is unknown."
+  offline: "&7&oThis player is offline."
+  add: "&7&o&p was added as a member of this &w."
+  remove: "&7&o&p was removed as a member of this &w."
+  owner: "&7&oThe owner of this &w was changed to &p."
+  configuration: "&7&oThe configuration was reloaded successfully."

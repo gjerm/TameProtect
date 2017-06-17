@@ -1,7 +1,7 @@
-package eu.crypticcraft.tameprotect.Utils;
+package eu.crypticcraft.tameprotect.Classes;
 
 /**
- * Created by dfood on 03.07.2016.
+ * Created by dfood on 17/06/2017.
  */
 public class Pair<K, V> {
     private K key;

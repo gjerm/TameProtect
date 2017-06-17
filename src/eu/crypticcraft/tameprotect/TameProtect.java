@@ -1,77 +1,54 @@
 package eu.crypticcraft.tameprotect;
 
-import eu.crypticcraft.tameprotect.Utils.Pair;
-import eu.crypticcraft.tameprotect.Utils.TameProtectConfigHandler;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-
+import eu.crypticcraft.tameprotect.Handlers.CommandHandler;
+import eu.crypticcraft.tameprotect.Handlers.DatabaseHandler;
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
-
 import java.util.*;
 
 
 public class TameProtect extends JavaPlugin {
-    private TameProtectConfigHandler config;
-    private static Set<UUID> tameOut = new HashSet<UUID>();
-    private static HashMap<UUID, Pair<String, String>> commandQueue = new HashMap<UUID, Pair<String, String>>();
-    private static HashMap<UUID, TameProtection> protections = new HashMap<UUID, TameProtection>();
+    private DatabaseHandler protectionDatabase;
+    private CommandHandler commandHandler;
+    private static HashMap<UUID, Protection> protections = new HashMap<UUID, Protection>();
 
     public void loadConfiguration() {
         this.getConfig().options().copyDefaults(true);
         this.saveConfig();
     }
 
+    public void reloadConfiguration() {
+        this.reloadConfig();
+        protectionDatabase.reloadProtections();
+    }
+
     @Override
     public void onEnable() {
         loadConfiguration();
-        this.config = new TameProtectConfigHandler(this);
-        this.getServer().getPluginManager().registerEvents(new TameProtectListener(this), this);
+        this.protectionDatabase = new DatabaseHandler(this);
+        this.commandHandler = new CommandHandler(this);
+        this.getServer().getPluginManager().registerEvents(new EventListener(this), this);
     }
 
-    public TameProtectConfigHandler getConfigProtections() {
-        return this.config;
+    public DatabaseHandler getProtectionDatabase() {
+        return this.protectionDatabase;
     }
-    public HashMap<UUID, TameProtection> getProtections() {
+
+    public HashMap<UUID, Protection> getProtections() {
         return protections;
     }
 
-    public HashMap<UUID, Pair<String, String>> getCommandQueue() {
-        return commandQueue;
+    public CommandHandler getCommandHandler() {
+        return commandHandler;
     }
 
-    public Set<UUID> getTimeOut () {
-        return tameOut;
+    public String getMessage(String msg, String playerName, String animalName) {
+        playerName = playerName == null ? "" : playerName;
+        animalName = animalName == null ? "" : animalName;
+        String m = this.getConfig().getString("message_prefix");
+        m += this.getConfig().getString("messages." + msg);
+        m = m.replaceAll("&p", playerName);
+        m = m.replaceAll("&w", animalName);
+        return ChatColor.translateAlternateColorCodes('&', m);
     }
-
-    @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (cmd.getName().equalsIgnoreCase("tprot")) {
-            if (args.length == 1) {
-                queueCommand(this.getServer().getPlayer(sender.getName()).getUniqueId(), args[0], "");
-            } else if (args.length >= 2) {
-                queueCommand(this.getServer().getPlayer(sender.getName()).getUniqueId(), args[0], args[1]);
-            }
-        }
-        return true;
-    }
-
-    private void queueCommand(final UUID player, String intent, String command) {
-        commandQueue.put(player, new Pair<String, String>(intent, command));
-        this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
-            public void run() {
-                commandQueue.remove(player);
-            }
-        }, 200L);
-    }
-
-    // Timeout for taming so the correct name is set
-    public void tameOut(final UUID player) {
-        tameOut.add(player);
-        this.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
-            public void run() {
-                tameOut.remove(player);
-            }
-        }, 20L);
-    }
-
 }

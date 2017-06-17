@@ -1,7 +1,6 @@
 package eu.crypticcraft.tameprotect;
 
-import eu.crypticcraft.tameprotect.Utils.Pair;
-import eu.crypticcraft.tameprotect.Utils.TameProtectUtils;
+import eu.crypticcraft.tameprotect.Utilities.EntityUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -11,15 +10,33 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
 
-public class TameProtectListener implements Listener {
+public class EventListener implements Listener {
     private TameProtect plugin;
 
-    public TameProtectListener(TameProtect plugin) {
-        this.plugin = plugin;
+    public EventListener(TameProtect plugin) { this.plugin = plugin; }
+
+    // Tame events can fire more than one time, keep track of recent events.
+    private HashSet<UUID> tameOut = new HashSet<UUID>();
+
+    /**
+     * As the tame event can fire multiple times for a single tame event,
+     * this method temporarily adds a player to a queue so the event isn't
+     * handled multiple times.
+     *
+     * @param player The player to ignore tame events for a certain time for.
+     */
+    public void tameOut(final UUID player) {
+        tameOut.add(player);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            public void run() {
+                tameOut.remove(player);
+            }
+        }, 20L);
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -28,11 +45,11 @@ public class TameProtectListener implements Listener {
             Player owner = (Player) event.getOwner();
             if (owner.hasPermission("tameprotect.protect")) {
                 // If player already tamed within the last half second, ignore (TameEvent can fire multiple times, setting the name wrong)
-                if (plugin.getTimeOut().contains(owner.getUniqueId())) return;
+                if (tameOut.contains(owner.getUniqueId())) return;
 
-                TameProtection protection = new TameProtection(event.getEntity(), (Player) event.getOwner(), plugin.getConfigProtections());
+                Protection protection = new Protection(event.getEntity(), (Player) event.getOwner(), plugin.getProtectionDatabase());
                 plugin.getProtections().put(event.getEntity().getUniqueId(), protection);
-                plugin.tameOut(owner.getUniqueId());
+                tameOut(owner.getUniqueId());
             }
         }
     }
@@ -41,16 +58,15 @@ public class TameProtectListener implements Listener {
     public void onMountAnimal (VehicleEnterEvent event) {
         if (event.getEntered() instanceof Player && event.getVehicle() instanceof Tameable) {
             Player player = (Player) event.getEntered();
-            TameProtection protection = TameProtectUtils.loadProtection(event.getEntered(), plugin);
+            Protection protection = Protection.loadProtection(event.getVehicle(), plugin);
 
             // Nobody owns this animal
             if (protection == null) {
                 return;
             }
-            Bukkit.broadcastMessage(player.getDisplayName());
             // Player is not the owner nor are they a member of the horse protection
             if (!player.getUniqueId().equals(protection.getOwner()) && !protection.getMembers().contains(player.getUniqueId())) {
-                player.sendMessage(plugin.getConfig().getString("messages.cannot_ride"));
+                player.sendMessage(plugin.getMessage("ride", player.getName(), protection.getName()));
                 event.setCancelled(true);
             }
         }
@@ -60,17 +76,17 @@ public class TameProtectListener implements Listener {
         if (!(event.getEntity() instanceof Tameable)) return;
 
         UUID entityId = event.getEntity().getUniqueId();
-        TameProtection protection = plugin.getProtections().get(entityId);
+        Protection protection = plugin.getProtections().get(entityId);
 
         if (protection == null) {
-            protection = plugin.getConfigProtections().loadProtectionFromConfig(event.getEntity().getUniqueId());
+            protection = plugin.getProtectionDatabase().loadProtectionFromConfig(event.getEntity().getUniqueId());
         }
 
         // Remove a protection on animal death if it exists.
         if (protection != null) {
             plugin.getProtections().remove(entityId);
-            plugin.getConfigProtections().removeProtection(entityId);
-            plugin.getConfigProtections().saveProtections();
+            plugin.getProtectionDatabase().removeProtection(entityId);
+            plugin.getProtectionDatabase().saveProtections();
         }
     }
 
@@ -80,13 +96,13 @@ public class TameProtectListener implements Listener {
         // Don't care for unrelated entities
         if (!(event.getEntity() instanceof Tameable)) return;
 
-        TameProtection protection = TameProtectUtils.loadProtection(event.getEntity(), plugin);
+        Protection protection = Protection.loadProtection(event.getEntity(), plugin);
         if (protection == null) return;
 
         if (event.getDamager() instanceof Player) {
             Player player = (Player) event.getDamager();
             if (!(protection.getOwner().equals(player.getUniqueId()) || player.hasPermission("tameprotect.override"))) {
-                player.sendMessage(plugin.getConfig().getString("messages.cannot_harm"));
+                player.sendMessage(plugin.getMessage("harm", player.getName(), protection.getName()));
                 event.setCancelled(true);
             }
         }
@@ -95,7 +111,7 @@ public class TameProtectListener implements Listener {
             if (arrow.getShooter() instanceof Player) {
                 Player shooter = (Player) arrow.getShooter();
                 if (protection.getOwner().equals(shooter.getUniqueId()) || shooter.hasPermission("tameprotect.override")) {
-                    shooter.sendMessage(plugin.getConfig().getString("messages.cannot_harm"));
+                    shooter.sendMessage(plugin.getMessage("harm", shooter.getName(), protection.getName()));
                     event.setCancelled(true);
                 }
             }
@@ -106,26 +122,21 @@ public class TameProtectListener implements Listener {
     public void onEnvDamage (EntityDamageEvent event) {
         // Ensure the entitytype is what we need and the animal has a protection.
         if (!(event.getEntity() instanceof Tameable)) return;
-        TameProtection protection = TameProtectUtils.loadProtection(event.getEntity(), plugin);
+        Protection protection = Protection.loadProtection(event.getEntity(), plugin);
         if (protection == null) return;
 
 
         // If someone is riding, don't cancel the damage event
         List<Entity> riding = event.getEntity().getPassengers();
         if (plugin.getConfig().getBoolean("damage_while_riding") && riding.size() > 0) return;
-        if (TameProtectUtils.getDamageCauses().contains(event.getCause())) {
+        if (EntityUtils.getDamageCauses().contains(event.getCause())) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler (priority = EventPriority.NORMAL, ignoreCancelled = true)
     public void onEntityInteract (PlayerInteractEntityEvent event) {
-        TameProtection protection = TameProtectUtils.loadProtection(event.getRightClicked(), plugin);
-        if (protection == null) return;
-
-        Pair<String, String> command = plugin.getCommandQueue().get(event.getPlayer().getUniqueId());
-        if (TameProtectUtils.commandHandler(command, protection, event.getPlayer(), plugin)) {
-            event.setCancelled(true);
-        }
+        final boolean result = plugin.getCommandHandler().onEntityInteract(event.getPlayer(), event.getRightClicked());
+        event.setCancelled(result);
     }
 }

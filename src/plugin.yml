@@ -3,9 +3,10 @@ version: 1.0
 author: DFood
 main: eu.crypticcraft.tameprotect.TameProtect
 commands:
-  tprot:
+  tameprotect:
     description: Base command for TameProtect.
-    usage: /tprot <add/remove/info/setowner> <player name if applicable>
+    usage: /tame <add/remove/info/setowner> <player name if applicable>
+    aliases: [tame, tprot]
 
 permissions:
   tameprotect.protect:
@@ -32,6 +33,9 @@ permissions:
   tameprotect.setowner.other:
     description: Set the owner of other peoples animals.
     default: op
+  tameprotect.reload:
+      description: Reload the plugin configuration
+      default: op
   tameprotect.override:
     description: Override animal protections.
     default: op

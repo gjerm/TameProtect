@@ -1,8 +1,7 @@
-package eu.crypticcraft.tameprotect.Utils;
+package eu.crypticcraft.tameprotect.Handlers;
 
+import eu.crypticcraft.tameprotect.Protection;
 import eu.crypticcraft.tameprotect.TameProtect;
-import eu.crypticcraft.tameprotect.TameProtection;
-import eu.crypticcraft.tameprotect.Utils.TameProtectUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -15,12 +14,12 @@ import java.util.logging.Level;
 /**
  * Created by dfood on 08.06.2016.
  */
-public class TameProtectConfigHandler {
+public class DatabaseHandler {
     private FileConfiguration protectionConfig;
     private File savedProtections;
     private TameProtect plugin;
 
-    public TameProtectConfigHandler(TameProtect plugin) {
+    public DatabaseHandler(TameProtect plugin) {
         this.plugin = plugin;
         reloadProtections();
     }
@@ -50,7 +49,7 @@ public class TameProtectConfigHandler {
      * @param animalId The UUID of the animal.
      * @return A TameProtection instance of the loaded protection or null.
      */
-    public TameProtection loadProtectionFromConfig (UUID animalId) {
+    public Protection loadProtectionFromConfig (UUID animalId) {
         Set<String> ids = protectionConfig.getKeys(false);
         String animalIdString = animalId.toString();
 
@@ -63,7 +62,7 @@ public class TameProtectConfigHandler {
                 members.add(member);
             }
 
-            return new TameProtection(animalId, members, this);
+            return new Protection(animalId, members, this);
         }
         else {
             return null;
