@@ -1,18 +1,13 @@
 package eu.crypticcraft.tameprotect;
-
 import eu.crypticcraft.tameprotect.Handlers.DatabaseHandler;
 import eu.crypticcraft.tameprotect.Utilities.EntityUtils;
 import eu.crypticcraft.tameprotect.Utilities.PlayerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.*;
-
 import java.util.HashSet;
 import java.util.UUID;
 import java.util.logging.Level;
 
-/**
- * Created by dfood on 2016-04-30.
- */
 public class Protection {
     private Entity animal;
     private HashSet<UUID> members;
@@ -25,14 +20,17 @@ public class Protection {
      * @param owner
      * @param config
      */
-    public Protection(Entity ent, Player owner, DatabaseHandler config) {
+    public Protection(Entity ent, Player owner, DatabaseHandler config, TameProtect plugin) {
         this.config = config;
         this.animal = ent;
         Tameable tamed = (Tameable) animal;
 
-        // Imported protection? No need to set the owner or change their name
-        if (tamed.getOwner() == null) {
-            String name = owner.getName() + "'s " + EntityUtils.getHumanName(animal);
+        // If the animal already has an owner it is imported from a previous tamed animal.
+        // In this case, don't set the name of it.
+        if (tamed.getOwner() == null && plugin.getConfig().getBoolean("auto_name")) {
+            String name = plugin.getConfig().getString("default_name");
+            name = name.replaceAll("&p", owner.getName());
+            name = name.replaceAll("&w", EntityUtils.getHumanName(ent));
             animal.setCustomNameVisible(true);
             animal.setCustomName(name);
         }
@@ -83,20 +81,32 @@ public class Protection {
     }
 
 
-    public boolean setOwner(Player owner) {
+    public boolean setOwner(Player owner, TameProtect plugin) {
         if (animal == null) return false;
         Tameable tamed = (Tameable) animal;
 
         tamed.setOwner(owner);
-        animal.setCustomName(owner.getName() + "'s " + EntityUtils.getHumanName(animal));
+
+        if (plugin.getConfig().getBoolean("auto_name")) {
+            String name = plugin.getConfig().getString("default_name");
+            name = name.replaceAll("&p", owner.getName());
+            name = name.replaceAll("&w", EntityUtils.getHumanName(animal));
+            animal.setCustomNameVisible(true);
+            animal.setCustomName(name);
+        }
         return true;
+    }
+
+    public void removeCustomName() {
+        animal.setCustomNameVisible(false);
+        animal.setCustomName(null);
     }
 
     public String getName() {
         return EntityUtils.getHumanName(animal);
     }
 
-    public String getInfo() {
+    public String getFormattedMembers() {
         String members = "";
         int count = 1;
         for (UUID id : this.getMembers()) {
@@ -110,7 +120,7 @@ public class Protection {
             }
             count++;
         }
-        return "Owner: " + PlayerUtils.getPlayerName(this.getOwner()) + "\n" + "Members: " + members;
+        return members;
     }
     /**
      * Loads a protection. If the animal has an owner and it is not registered with the plugin a new protection will be created.
@@ -118,9 +128,11 @@ public class Protection {
      * First attempts to find it in the cache. If it does not exist there, it loads it into the cache from the database.
      * @param entity The entity in question.
      * @param plugin The plugin instance.
-     * @return The newly created (or not) protection.
+     * @return The found or created protection, or null if neither apply.
      */
     public static Protection loadProtection(Entity entity, TameProtect plugin) {
+        if (!plugin.getConfig().getBoolean("auto_protect")) return null;
+
         Protection protection;
 
         if (entity instanceof Tameable) {
@@ -145,12 +157,16 @@ public class Protection {
                 Player owner = (Player) animal.getOwner();
                 if (owner.hasPermission("tameprotect.protect")) {
                     // It's not in either but it needs to be registered with the plugin (animal has an owner), add to cache and config
-                    protection = new Protection(entity, owner, plugin.getProtectionDatabase());
+                    protection = new Protection(entity, owner, plugin.getProtectionDatabase(), plugin);
                     plugin.getProtections().put(entity.getUniqueId(), protection);
                     return protection;
                 }
             }
         }
         return null;
+    }
+
+    public Entity getAnimal() {
+        return animal;
     }
 }

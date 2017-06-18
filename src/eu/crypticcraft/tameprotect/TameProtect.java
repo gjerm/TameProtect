@@ -1,5 +1,6 @@
 package eu.crypticcraft.tameprotect;
 
+import eu.crypticcraft.tameprotect.Classes.MessageInfo;
 import eu.crypticcraft.tameprotect.Handlers.CommandHandler;
 import eu.crypticcraft.tameprotect.Handlers.DatabaseHandler;
 import org.bukkit.ChatColor;
@@ -44,13 +45,24 @@ public class TameProtect extends JavaPlugin {
         return commandHandler;
     }
 
-    public void sendMessage(Player player, String msg, String playerName, String animalName) {
-        playerName = playerName == null ? "" : playerName;
-        animalName = animalName == null ? "" : animalName;
-        String m = this.getConfig().getString("message_prefix");
-        m += this.getConfig().getString("messages." + msg);
-        m = m.replaceAll("&p", playerName);
-        m = m.replaceAll("&w", animalName);
-        if (m.length() > 0) player.sendMessage(ChatColor.translateAlternateColorCodes('&', m));
+    public void sendMessage(Player player, String msgType, MessageInfo msgInfo) {
+        String message = "";
+        if (msgType.equals("info")) {
+            message += this.getConfig().getString("messages.info1") + "\n";
+            message += this.getConfig().getString("messages.info2") + "\n";
+            message += this.getConfig().getString("messages.info3");
+        }
+        else {
+            if (this.getConfig().contains("messages." + msgType)) {
+                message = this.getConfig().getString("message_prefix");
+                message += this.getConfig().getString("messages." + msgType);
+            }
+        }
+        message = message.replaceAll("&p", msgInfo.playerName);
+        message = message.replaceAll("&w", msgInfo.animalName);
+        message = message.replaceAll("&t", msgInfo.members);
+        if (message.length() > 0) {
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
+        }
     }
 }

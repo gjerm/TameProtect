@@ -1,4 +1,5 @@
 package eu.crypticcraft.tameprotect.Handlers;
+import eu.crypticcraft.tameprotect.Classes.MessageInfo;
 import eu.crypticcraft.tameprotect.Classes.Pair;
 import eu.crypticcraft.tameprotect.Classes.TamePlayer;
 import eu.crypticcraft.tameprotect.Protection;
@@ -10,6 +11,8 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Tameable;
+
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -19,7 +22,7 @@ public class CommandHandler implements CommandExecutor {
 
     private long commandTimeout;
     private HashMap<String, TameTask> commandToTask;
-    private enum TameTask {ADD, REMOVE, SET_OWNER, INFO}
+    private enum TameTask {ADD, REMOVE, SET_OWNER, INFO, UNNAME, UNTAME}
 
     private HashMap<UUID, Pair<TameTask, String>> commandQueue = new HashMap<UUID, Pair<TameTask, String>>();
 
@@ -39,6 +42,8 @@ public class CommandHandler implements CommandExecutor {
         commandToTask.put("remove", TameTask.REMOVE);
         commandToTask.put("setowner", TameTask.SET_OWNER);
         commandToTask.put("info", TameTask.INFO);
+        commandToTask.put("unname", TameTask.UNNAME);
+        commandToTask.put("untame", TameTask.UNTAME);
     }
 
     /**
@@ -73,14 +78,11 @@ public class CommandHandler implements CommandExecutor {
      * @return A boolean indication whether the evoking event should be cancelled or not.
      */
     public boolean onEntityInteract(Player player, Entity entity) {
+        if (!(entity instanceof Tameable)) return false;
         Pair<TameTask, String> command = commandQueue.get(player.getUniqueId());
         Protection protection = Protection.loadProtection(entity, plugin);
         if (protection == null || command == null) return false;
         commandQueue.remove(player.getUniqueId());
-
-        final boolean mountOnCommand = plugin.getConfig().getBoolean("mount_on_command");
-        final boolean playerIsOwner = protection.getOwner().equals(player.getUniqueId());
-        final boolean playerOverride = player.hasPermission("tameprotect.override");
 
         String action = "";
         switch (command.getKey()) {
@@ -95,44 +97,81 @@ public class CommandHandler implements CommandExecutor {
                 break;
             case INFO:
                 action = "info";
+                break;
+            case UNNAME:
+                action = "unname";
+                break;
+            case UNTAME:
+                action = "untame";
+                break;
         }
+
+        final boolean mountOnCommand = plugin.getConfig().getBoolean("mount_on_command");
+        final boolean playerIsOwner = protection.getOwner().equals(player.getUniqueId());
         final boolean actionPerm = player.hasPermission(String.format("tameprotect.%s", action));
         final boolean actionPermOther = player.hasPermission(String.format("tameprotect.%s.other", action));
         final String argument = command.getValue();
-        TamePlayer argPlayer = PlayerUtils.getPlayer(argument);
+        final TamePlayer argPlayer = PlayerUtils.getPlayer(argument);
+        final MessageInfo msgInfo = new MessageInfo();
+        msgInfo.animalName = protection.getName();
 
-        if ((playerOverride || actionPermOther) || (actionPerm && playerIsOwner)) {
+        if (actionPermOther || (actionPerm && playerIsOwner)) {
             if (!command.getKey().equals(TameTask.INFO)) {
                 if (argPlayer == null || (!argPlayer.hasPlayedBefore()) && !argPlayer.isOnline()) {
-                    plugin.sendMessage(player, "unknown", "", protection.getName());
+                    plugin.sendMessage(player, "unknown",  msgInfo);
                     return !mountOnCommand;
                 }
+
+                msgInfo.animalName = protection.getName();
+                msgInfo.playerName = argPlayer.getName();
             }
-            // argPlayer is already null-checked - IDE may throw warning.
+            else {
+                msgInfo.animalName = protection.getAnimal().getCustomName();
+                msgInfo.playerName = PlayerUtils.getPlayerName(protection.getOwner());
+                msgInfo.members = protection.getFormattedMembers();
+            }
+
+            /*
+            IDE may warn that argPlayer can be null, but this was checked for in relevant situations.
+            (argPlayer is not used if the info command was called)
+             */
             switch (command.getKey()) {
                 case ADD:
                     protection.addMember(argPlayer.getUniqueId());
-                    plugin.sendMessage(player, "add", argPlayer.getName(), protection.getName());
+                    plugin.sendMessage(player, "add", msgInfo);
                     break;
                 case REMOVE:
                     protection.removeMember(argPlayer.getUniqueId());
-                    plugin.sendMessage(player, "remove", argPlayer.getName(), protection.getName());
-                    break;
+                    plugin.sendMessage(player, "remove", msgInfo);
+                break;
                 case SET_OWNER:
                     Player newPlayer = Bukkit.getPlayer(command.getValue());
                     if (newPlayer == null) {
-                        plugin.sendMessage(player, "offline", argPlayer.getName(), protection.getName());
+                        plugin.sendMessage(player, "offline", msgInfo);
                         return !mountOnCommand;
                     }
-                    protection.setOwner(newPlayer);
+                    protection.setOwner(newPlayer, plugin);
+                    break;
+                case UNNAME:
+                    protection.removeCustomName();
+                    plugin.sendMessage(player, "unname", msgInfo);
+                    break;
+                case UNTAME:
+                    final UUID entityId = protection.getAnimal().getUniqueId();
+                    ((Tameable) protection.getAnimal()).setOwner(null);
+                    protection.removeCustomName();
+                    plugin.getProtections().remove(entityId);
+                    plugin.getProtectionDatabase().removeProtection(entityId);
+                    plugin.getProtectionDatabase().saveProtections();
+                    plugin.sendMessage(player, "untame", msgInfo);
                     break;
                 case INFO:
-                    player.sendMessage(protection.getInfo());
+                    plugin.sendMessage(player, "info", msgInfo);
                     break;
             }
         }
         else {
-            plugin.sendMessage(player, "permission", argPlayer.getName(), protection.getName());
+            plugin.sendMessage(player, "permission", msgInfo);
         }
         return !mountOnCommand;
     }
@@ -150,7 +189,7 @@ public class CommandHandler implements CommandExecutor {
         if (args.length > 0) {
             if (args[0].equals("reload") && sender.hasPermission("tameprotect.reload")) {
                 plugin.reloadConfiguration();
-                plugin.sendMessage((Player) sender, "configuration", "", "");
+                plugin.sendMessage((Player) sender, "configuration", new MessageInfo());
                 return true;
             }
 
@@ -161,6 +200,7 @@ public class CommandHandler implements CommandExecutor {
                 final String secondArg = args.length > 1 ? args[1] : "";
                 if (queuedType != null) {
                     queueCommand(player.getUniqueId(), queuedType, secondArg);
+                    plugin.sendMessage(player, "rightclick", new MessageInfo());
                 }
                 return true;
             }

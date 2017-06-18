@@ -5,7 +5,7 @@ main: eu.crypticcraft.tameprotect.TameProtect
 commands:
   tameprotect:
     description: Base command for TameProtect.
-    usage: /tame <add/remove/info/setowner> <player name if applicable>
+    usage: /tame <action> <player name>
     aliases: [tame, tprot]
 
 permissions:
@@ -24,6 +24,12 @@ permissions:
   tameprotect.setowner:
     description: Set the owner of your animal.
     default: true
+  tameprotect.unname:
+    description: Remove the name of your animal.
+    default: true
+  tameprotect.unname:
+    description: Remove yourself as the owner of the animal.
+    default: true
   tameprotect.addmember.other:
     description: Add members to other peoples animals.
     default: op
@@ -33,8 +39,14 @@ permissions:
   tameprotect.setowner.other:
     description: Set the owner of other peoples animals.
     default: op
+  tameprotect.unname.other:
+    description: Remove the name of other peoples animal.
+    default: op
+  tameprotect.untame.other:
+    description: Remove the owner of other peoples animal.
+    default: op
   tameprotect.reload:
-      description: Reload the plugin configuration
+      description: Reload the plugin configuration.
       default: op
   tameprotect.override:
     description: Override animal protections.

@@ -1,5 +1,9 @@
+auto_protect: true
+environmental_damage: false
 damage_while_riding: true
 mount_on_command: true
+auto_name: true
+default_name: "&p's &w"
 command_timeout: 5
 message_prefix: ""
 messages:
@@ -12,3 +16,9 @@ messages:
   remove: "&7&o&p was removed as a member of this &w."
   owner: "&7&oThe owner of this &w was changed to &p."
   configuration: "&7&oThe configuration was reloaded successfully."
+  rightclick: "&7&oRight click an animal to apply command."
+  unname: "&7&oAnimal name removed."
+  untame: "&7&oAnimal un-tamed."
+  info1: "&7&n- &w -"
+  info2: "&7Owner: &p"
+  info3: "&7Members: &t"
