@@ -5,6 +5,7 @@ import eu.crypticcraft.tameprotect.TameProtect;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +27,13 @@ public class DatabaseHandler {
     public DatabaseHandler(TameProtect plugin) {
         this.plugin = plugin;
         reloadProtections();
+
+        // Save the protections database every minute
+        plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+            public void run() {
+                saveProtections();
+            }
+        }, 0L, plugin.getConfig().getLong("save_interval") * 20);
     }
 
     /**
@@ -116,5 +124,4 @@ public class DatabaseHandler {
     public void removeProtection(UUID animalId) {
         protectionConfig.set(animalId.toString(), null);
     }
-
 }

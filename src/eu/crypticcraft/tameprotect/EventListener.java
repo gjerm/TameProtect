@@ -94,7 +94,6 @@ public class EventListener implements Listener {
         // Remove a protection on animal death if it exists.
         plugin.getProtections().remove(entityId);
         plugin.getProtectionDatabase().removeProtection(entityId);
-        plugin.getProtectionDatabase().saveProtections();
 
     }
 

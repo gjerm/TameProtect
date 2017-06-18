@@ -36,7 +36,6 @@ public class Protection {
         }
 
         this.config.createProtection(animal.getUniqueId());
-        this.config.saveProtections();
 
         members = new HashSet<UUID>();
     }
@@ -69,7 +68,6 @@ public class Protection {
     public void addMember(UUID memberId) {
         if (!members.contains(memberId)) {
             config.addMember(animal.getUniqueId(), memberId);
-            config.saveProtections();
         }
         members.add(memberId);
     }
@@ -77,7 +75,6 @@ public class Protection {
     public void removeMember(UUID memberId) {
         members.remove(memberId);
         config.removeMember(animal.getUniqueId(), memberId);
-        config.saveProtections();
     }
 
 

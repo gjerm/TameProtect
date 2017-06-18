@@ -5,6 +5,7 @@ mount_on_command: true
 auto_name: true
 default_name: "&p's &w"
 command_timeout: 5
+save_interval: 60
 message_prefix: ""
 messages:
   ride: "&cYou are not allowed to ride this animal!"
@@ -19,6 +20,6 @@ messages:
   rightclick: "&7&oRight click an animal to apply command."
   unname: "&7&oAnimal name removed."
   untame: "&7&oAnimal un-tamed."
-  info1: "&7&n- &w -"
+  info1: "&8- &w -"
   info2: "&7Owner: &p"
   info3: "&7Members: &t"

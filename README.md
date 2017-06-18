@@ -6,7 +6,7 @@ TameProtect is a simple plugin giving players the ability to control access to t
 - Animals can not be harmed by other players.
 - Rideable animals can not be mounted by other players.
 - Other players can be added to an animal to let them mount/harm it.
-- Players can transfer ownership of animals.
+- Players can transfer or remove ownership of animals.
 - Players can remove the name of owned animals.
 - **All of the above can be overridden by server administrators.**
 - Animals are protected from all environmental damage (configurable).
@@ -19,6 +19,5 @@ TameProtect is a simple plugin giving players the ability to control access to t
 # Todo
 
 - Proper database (SQL?) support and merging, disk I/O is slow.
-- Scheduled protections saving rather than having to do file I/O every time a protection changes.
 - A method of manually adding mobs for future-proofing in case it stops being updated (All that is really needed is the animal ID and human readable name, for naming).
 - Keep track of whether an animal has been renamed with a name tag after being added to the plugin - useful so we don't reset user created names on owner change/can return name tag on unname

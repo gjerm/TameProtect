@@ -21,7 +21,6 @@ public class TameProtect extends JavaPlugin {
 
     public void reloadConfiguration() {
         this.reloadConfig();
-        protectionDatabase.reloadProtections();
         commandHandler.reload();
     }
 
@@ -31,6 +30,11 @@ public class TameProtect extends JavaPlugin {
         this.protectionDatabase = new DatabaseHandler(this);
         this.commandHandler = new CommandHandler(this);
         this.getServer().getPluginManager().registerEvents(new EventListener(this), this);
+    }
+
+    @Override
+    public void onDisable() {
+        protectionDatabase.saveProtections();
     }
 
     public DatabaseHandler getProtectionDatabase() {
