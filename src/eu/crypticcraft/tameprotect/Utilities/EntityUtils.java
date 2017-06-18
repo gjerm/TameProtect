@@ -72,7 +72,8 @@ public class EntityUtils {
                 return "Skeleton Horse";
             case ZOMBIE_HORSE:
                 return "Zombie Horse";
-
+            case PARROT:
+                return "Parrot";
             default:
                 return "Unknown";
         }
