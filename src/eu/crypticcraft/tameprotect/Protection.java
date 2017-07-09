@@ -151,8 +151,8 @@ public class Protection {
                 plugin.getProtections().put(entity.getUniqueId(), protection);
                 return protection;
             } else {
-                Player owner = (Player) animal.getOwner();
-                if (owner.hasPermission("tameprotect.protect")) {
+                Player owner = Bukkit.getPlayer(animal.getOwner().getUniqueId());
+                if (owner != null && owner.hasPermission("tameprotect.protect")) {
                     // It's not in either but it needs to be registered with the plugin (animal has an owner), add to cache and config
                     protection = new Protection(entity, owner, plugin.getProtectionDatabase(), plugin);
                     plugin.getProtections().put(entity.getUniqueId(), protection);
