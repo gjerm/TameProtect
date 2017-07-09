@@ -18,6 +18,8 @@ TameProtect is a simple plugin giving players the ability to control access to t
 
 # Todo
 
+- If configured, block environmental damage if an animal is owned but does not have a protection (and one cannot be created, we need an online user for this.. or we can change that)
+- Teleportation of animals. Have the player select from a list? If so, what happens with a lot of them?
 - Proper database (SQL?) support and merging, disk I/O is slow.
 - A method of manually adding mobs for future-proofing in case it stops being updated (All that is really needed is the animal ID and human readable name, for naming).
 - Keep track of whether an animal has been renamed with a name tag after being added to the plugin - useful so we don't reset user created names on owner change/can return name tag on unname
